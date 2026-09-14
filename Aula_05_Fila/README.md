@@ -2,18 +2,20 @@
 
 Esta página documenta a atividade de mensageria com Redis. A API publica tarefas assíncronas e devolve um identificador para acompanhamento.
 
-## Implementação
+## Atividades
 
-- [POST /predict](../Aula_08_Fila/POST_predict/README.md)
-- [Fila Redis compartilhada](../Aula_08_Fila/fila.py)
-- [Composição Docker](../Aula_08_Fila/docker-compose.yml)
+- [POST /predict](./POST_predict/README.md)
+- [GET /resultado/{id}](./GET_resultado_id/README.md)
+- `fila.py`: estados, tentativas e resultados.
+- `modelo.py`: modelo usado pelo worker.
 
-A execução completa está documentada no [README da Aula 08](../Aula_08_Fila/README.md).
+## Execução
 
-## Endpoint principal
-
-```http
-POST /predict
+```bash
+cd Aula_05_Fila
+pip install -r ../Aula_08_Worker_Resiliencia/requirements.txt
+# com o Redis em execução:
+PYTHONPATH=. uvicorn POST_predict.api_rest:app --host 0.0.0.0 --port 8000
 ```
 
-A resposta é `202 Accepted` e contém o identificador da tarefa enfileirada.
+A API expõe `POST /predict` com resposta `202 Accepted` e `GET /resultado/{id}` para consulta do processamento.
