@@ -45,14 +45,14 @@ Em outro terminal, inicie a API REST:
 
 ```bash
 source .venv/bin/activate
-uvicorn api_rest:app --host 0.0.0.0 --port 8000
+PYTHONPATH=. uvicorn POST_predict.api_rest:app --host 0.0.0.0 --port 8000
 ```
 
 Em um terceiro terminal, inicie o worker:
 
 ```bash
 source .venv/bin/activate
-python worker.py
+PYTHONPATH=. python -m worker_grava_resultado.worker
 ```
 
 A documentação OpenAPI fica em <http://localhost:8000/docs>.
@@ -70,7 +70,7 @@ curl -X POST http://localhost:8000/predict-sync \\
 Inferência assíncrona e consulta:
 
 ```bash
-python cliente_fila.py "o atendimento foi excelente e muito rapido"
+PYTHONPATH=. python worker_grava_resultado/cliente_fila.py "o atendimento foi excelente e muito rapido"
 ```
 
 Ou manualmente:
