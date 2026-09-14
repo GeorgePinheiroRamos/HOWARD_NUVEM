@@ -1,3 +1,4 @@
+import logging
 from time import perf_counter
 
 from fastapi import FastAPI, HTTPException
@@ -6,7 +7,11 @@ from pydantic import BaseModel
 import fila
 from modelo import carregar_modelo
 
-app = FastAPI(title="API de sentimento com fila", version="1.0.0")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("api-rest")
+
+app = FastAPI(title="API de sentimento com fila", version="2.0.0")
+# O modelo é carregado uma vez por processo, nunca por requisição.
 modelo = carregar_modelo()
 
 
@@ -16,18 +21,20 @@ class Entrada(BaseModel):
 
 @app.get("/saude")
 def saude():
-    return {"status": "ok", "modelo_carregado": modelo is not None}
+    inicio = perf_counter()
+    resposta = {"status": "ok", "modelo_carregado": modelo is not None}
+    logger.info("request id=saude entrada=0 tempo_ms=%.2f", (perf_counter() - inicio) * 1000)
+    return resposta
 
 
 @app.post("/predict-sync")
 def predict_sync(entrada: Entrada):
     if not entrada.texto.strip():
         raise HTTPException(status_code=400, detail="O texto não pode ficar vazio.")
-
     inicio = perf_counter()
     resultado = modelo.prever(entrada.texto)
     resultado["tempo_ms"] = round((perf_counter() - inicio) * 1000, 2)
-    print(f"[REST] sincrono texto={len(entrada.texto)} caracteres tempo={resultado['tempo_ms']} ms", flush=True)
+    logger.info("request id=sync entrada=%d tempo_ms=%.2f", len(entrada.texto), (perf_counter() - inicio) * 1000)
     return resultado
 
 
@@ -35,11 +42,10 @@ def predict_sync(entrada: Entrada):
 def predict(entrada: Entrada):
     if not entrada.texto.strip():
         raise HTTPException(status_code=400, detail="O texto não pode ficar vazio.")
-
     inicio = perf_counter()
     tarefa_id = fila.enfileirar(entrada.texto)
     tempo_ms = round((perf_counter() - inicio) * 1000, 2)
-    print(f"[REST] /predict id={tarefa_id} texto={len(entrada.texto)} caracteres tempo={tempo_ms} ms", flush=True)
+    logger.info("request id=%s entrada=%d tempo_ms=%.2f status=na_fila", tarefa_id, len(entrada.texto), tempo_ms)
     return {"id": tarefa_id, "status": "na_fila"}
 
 
@@ -48,10 +54,8 @@ def resultado(tarefa_id: str):
     inicio = perf_counter()
     dados = fila.buscar_resultado(tarefa_id)
     tempo_ms = round((perf_counter() - inicio) * 1000, 2)
-
     if dados is None:
-        print(f"[REST] /resultado id={tarefa_id} nao encontrado tempo={tempo_ms} ms", flush=True)
+        logger.info("request id=%s entrada=0 tempo_ms=%.2f status=nao_encontrado", tarefa_id, tempo_ms)
         raise HTTPException(status_code=404, detail="Tarefa não encontrada.")
-
-    print(f"[REST] /resultado id={tarefa_id} status={dados.get('status')} tempo={tempo_ms} ms", flush=True)
+    logger.info("request id=%s entrada=0 tempo_ms=%.2f status=%s", tarefa_id, tempo_ms, dados.get("status"))
     return dados

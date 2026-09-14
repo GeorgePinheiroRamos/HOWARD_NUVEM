@@ -114,11 +114,11 @@ python3 cliente_fila.py "o atendimento foi excelente e muito rapido"
 
 Ele mostra o id devolvido na hora e, em seguida, o resultado depois que o worker termina.
 
-## 8. Próximos passos
+## 8. Fechamento da entrega
 
 O caminho assíncrono está completo. Conferi que o mesmo texto recebe a mesma classificação pelas duas rotas, a síncrona e a assíncrona, e que o modelo é carregado uma única vez em cada processo.
 
-Ainda faltam as demais tarefas do trabalho: a interface gRPC com o método de lote, o tratamento de erro com nova tentativa e fila de descarte, e a revisão final da documentação.
+As demais tarefas obrigatórias foram incorporadas nesta versão: a interface gRPC possui o método de lote, o worker faz retentativas e envia falhas persistentes para a fila dead-letter, e a documentação de execução está no arquivo `README.md` desta pasta.
 
 ## Referência
 
